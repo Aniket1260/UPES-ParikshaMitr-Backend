@@ -22,11 +22,18 @@ import {
   NotificationDocument,
 } from '../schemas/notification.schema';
 
+import { Slot } from '../schemas/slot.schema';
+// import
+// import { Slot } from '../schemas/slot.schema';
+import { FlyingSquad } from '../schemas/flying-squad.schema';
+
 @Injectable()
 export class TeacherService {
   constructor(
     @InjectModel(Teacher.name) private teacherModel: Model<Teacher>,
     @InjectModel(Schedule.name) private scheduleModel: Model<Schedule>,
+    @InjectModel(Slot.name) private slotModel: Model<Slot>,
+    @InjectModel(FlyingSquad.name) private flyingsquadModel: Model<FlyingSquad>,
     @InjectModel(Notification.name)
     private notificationModel: Model<Notification>,
     private jwtService: JwtService,
@@ -74,6 +81,7 @@ export class TeacherService {
       const teacherData = await this.teacherModel.findOne({
         sap_id: teacher.sap_id,
       });
+
       if (!teacherData) {
         throw new HttpException(
           {
@@ -280,6 +288,48 @@ export class TeacherService {
       throw new HttpException(
         {
           message: 'Teacher not found',
+        },
+        404,
+      );
+    }
+  }
+
+  async getSlotDetails(id: string) {
+    try {
+      const slots = await this.slotModel.find().exec();
+      const flyingSquads = await this.flyingsquadModel
+        .find()
+        .populate('rooms_assigned.room_id')
+        .exec();
+      const result = {};
+      for (const slot of slots) {
+        // Format the date as 'YYYY-MM-DD'
+        const date = slot.date.toString().split('T')[0];
+
+        // Initialize the array for this date
+        result[date] = [];
+
+        // Find the flying squads for this slot
+        const squads = flyingSquads.filter(
+          (squad) => squad.slot.toString() === slot._id.toString(),
+        );
+        for (const squad of squads) {
+          const task =
+            squad._id.toString() === id ? 'Flying Duty' : 'Invigilation Duty';
+          result[date].push({
+            timeSlot: slot.timeSlot,
+            task: task,
+            room: 'Controller Room',
+            message:
+              'Go to the controller room, press start invigilation and scan the QR for further instructions', // This is hardcoded, adjust as needed
+          });
+        }
+      }
+      return result;
+    } catch (err) {
+      throw new HttpException(
+        {
+          message: 'Internal Error',
         },
         404,
       );

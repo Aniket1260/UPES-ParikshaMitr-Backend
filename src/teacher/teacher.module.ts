@@ -13,6 +13,11 @@ import {
 import { FlyingModule } from './flying/flying.module';
 import { StudentModule } from './student/student.module';
 import { CopyDistributionModule } from './copy-distribution/copy-distribution.module';
+import { Slot, SlotSchema } from 'src/schemas/slot.schema';
+import {
+  FlyingSquad,
+  FlyingSquadSchema,
+} from 'src/schemas/flying-squad.schema';
 
 @Module({
   imports: [
@@ -20,6 +25,8 @@ import { CopyDistributionModule } from './copy-distribution/copy-distribution.mo
       { name: Teacher.name, schema: TeacherSchema },
       { name: Schedule.name, schema: ScheduleSchema },
       { name: Notification.name, schema: NotificationSchema },
+      { name: Slot.name, schema: SlotSchema },
+      { name: FlyingSquad.name, schema: FlyingSquadSchema },
     ]),
     JwtModule.registerAsync({
       useFactory: () => ({

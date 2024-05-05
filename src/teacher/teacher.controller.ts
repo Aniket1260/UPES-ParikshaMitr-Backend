@@ -73,6 +73,12 @@ export class TeacherController {
     return this.teacherService.getTeacherDetails(req?.user?.id);
   }
 
+  @UseGuards(TeacherJwtGuard)
+  @Get('getSlotDetails')
+  getSlotDetails(@Req() req) {
+    return this.teacherService.getSlotDetails(req?.user.id);
+  }
+
   @Get('/find/:id')
   findOne(@Param('id') id: string) {
     return this.teacherService.findOne(id);
