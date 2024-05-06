@@ -1,5 +1,8 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { CreateExamControllerDto } from './dto/create-exam-controller.dto';
+import {
+  CreateExamControllerDto,
+  CreateExamControllerSuperDto,
+} from './dto/create-exam-controller.dto';
 import { UpdateExamControllerDto } from './dto/update-exam-controller.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -27,6 +30,42 @@ export class ExamControllerService {
   ) {}
 
   async create(createExamControllerDto: CreateExamControllerDto) {
+    try {
+      const examControllerData = await this.examControllerModel.findOne({
+        username: createExamControllerDto.username,
+      });
+      if (examControllerData) {
+        throw new HttpException(
+          {
+            message: 'Username already exists',
+          },
+          400,
+        );
+      }
+
+      const pass_hash = await bcrypt.hash(createExamControllerDto.password, 10);
+      createExamControllerDto.password = pass_hash;
+
+      const createdController = new this.examControllerModel(
+        createExamControllerDto,
+      );
+      createdController.save();
+      return {
+        message: 'ExamController created successfully',
+        data: {
+          name: createdController.name,
+        },
+      };
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      } else {
+        throw new HttpException(err.message, 400);
+      }
+    }
+  }
+
+  async createSuper(createExamControllerDto: CreateExamControllerSuperDto) {
     try {
       const examControllerData = await this.examControllerModel.findOne({
         username: createExamControllerDto.username,
@@ -155,7 +194,7 @@ export class ExamControllerService {
   }
 
   findAll() {
-    return this.examControllerModel.find().exec();
+    return this.examControllerModel.find().select('name username role').exec();
   }
 
   findOne(id: string) {
@@ -166,7 +205,21 @@ export class ExamControllerService {
     return `This action updates a #${id} examController`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} examController`;
+  async remove(id: string) {
+    try {
+      if (!id) {
+        throw new HttpException('ID is required', 400);
+      }
+      await this.examControllerModel.deleteOne({ _id: id });
+      return {
+        message: 'ExamController deleted successfully',
+      };
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      } else {
+        throw new HttpException(err.message, 400);
+      }
+    }
   }
 }

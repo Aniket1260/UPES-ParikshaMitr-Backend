@@ -10,7 +10,10 @@ import {
   Req,
 } from '@nestjs/common';
 import { ExamControllerService } from './exam-controller.service';
-import { CreateExamControllerDto } from './dto/create-exam-controller.dto';
+import {
+  CreateExamControllerDto,
+  CreateExamControllerSuperDto,
+} from './dto/create-exam-controller.dto';
 import { UpdateExamControllerDto } from './dto/update-exam-controller.dto';
 import { LoginExamControllerDto } from './dto/exam-controller-login.dto';
 import { ExamContGuard } from '../guards/cont-guard.guard';
@@ -74,8 +77,21 @@ export class ExamControllerController {
     return this.examControllerService.update(+id, updateExamControllerDto);
   }
 
+  @UseGuards(ExamContGuard)
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
-    return this.examControllerService.remove(+id);
+    return this.examControllerService.remove(id);
+  }
+
+  @UseGuards(ExamContGuard)
+  @Get('')
+  findAllExamControllers() {
+    return this.examControllerService.findAll();
+  }
+
+  @UseGuards(ExamContGuard)
+  @Post('create-super')
+  createSuper(@Body() createExamControllerDto: CreateExamControllerSuperDto) {
+    return this.examControllerService.createSuper(createExamControllerDto);
   }
 }
