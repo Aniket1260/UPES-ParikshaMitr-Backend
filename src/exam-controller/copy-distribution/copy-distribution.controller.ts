@@ -67,6 +67,12 @@ export class CopyDistributionController {
     return this.copyDistributionService.deleteBundle(id, batch);
   }
 
+  @UseGuards(ExamContGuard)
+  @Delete('delete-subject')
+  async deleteSubject(@Query('bundle_id') id: string) {
+    return this.copyDistributionService.deleteSubject(id);
+  }
+
   @UseGuards(TeacherJwtGuard)
   @Patch('accept-bundle')
   async acceptBundle(@Body() progressBundleDto: ProgressBundleDto, @Req() req) {

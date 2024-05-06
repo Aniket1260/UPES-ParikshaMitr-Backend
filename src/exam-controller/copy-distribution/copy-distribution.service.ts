@@ -384,4 +384,21 @@ export class CopyDistributionService {
       message: 'Batch updated successfully',
     };
   }
+
+  //#region Delete Subject
+  async deleteSubject(id: string) {
+    const bundle = await this.copyBundleModel.findById(id);
+
+    if (!bundle) {
+      return {
+        message: 'Bundle not found',
+      };
+    }
+
+    await bundle.deleteOne();
+
+    return {
+      message: 'Bundle deleted successfully',
+    };
+  }
 }
