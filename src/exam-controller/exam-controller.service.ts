@@ -222,4 +222,22 @@ export class ExamControllerService {
       }
     }
   }
+
+  async changeRole(id: string, role: string) {
+    try {
+      if (!id) {
+        throw new HttpException('ID is required', 400);
+      }
+      await this.examControllerModel.updateOne({ _id: id }, { role });
+      return {
+        message: 'Role updated successfully',
+      };
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      } else {
+        throw new HttpException(err.message, 400);
+      }
+    }
+  }
 }

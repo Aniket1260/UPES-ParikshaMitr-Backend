@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateExamControllerDto {
   @IsString()
@@ -28,6 +28,13 @@ export class CreateExamControllerSuperDto {
   password: string;
 
   @IsString()
+  @IsNotEmpty()
+  role: string;
+}
+
+export class ChangeRoleDto {
+  @IsString()
+  @IsIn(['admin', 'proctor'])
   @IsNotEmpty()
   role: string;
 }

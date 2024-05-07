@@ -8,9 +8,11 @@ import {
   Delete,
   UseGuards,
   Req,
+  Put,
 } from '@nestjs/common';
 import { ExamControllerService } from './exam-controller.service';
 import {
+  ChangeRoleDto,
   CreateExamControllerDto,
   CreateExamControllerSuperDto,
 } from './dto/create-exam-controller.dto';
@@ -93,5 +95,11 @@ export class ExamControllerController {
   @Post('create-super')
   createSuper(@Body() createExamControllerDto: CreateExamControllerSuperDto) {
     return this.examControllerService.createSuper(createExamControllerDto);
+  }
+
+  @UseGuards(ExamContGuard)
+  @Put('change-role/:id')
+  changeRole(@Param('id') id: string, @Body() body: ChangeRoleDto) {
+    return this.examControllerService.changeRole(id, body.role);
   }
 }
