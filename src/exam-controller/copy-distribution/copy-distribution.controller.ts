@@ -18,6 +18,7 @@ import {
   ProgressBundleDto,
 } from './dto/progess-bundle.dto';
 import { TeacherJwtGuard } from '../../guards/teacher-jwt.guard';
+import { EditBundleDto } from './dto/edit-bundle.dto';
 
 @Controller('exam-controller/copy-distribution')
 export class CopyDistributionController {
@@ -80,5 +81,11 @@ export class CopyDistributionController {
       progressBundleDto,
       req?.user?.id,
     );
+  }
+
+  @UseGuards(ExamContGuard)
+  @Post('edit-bundle')
+  async editBundle(@Body() editBundleDto: EditBundleDto) {
+    return this.copyDistributionService.editBundle(editBundleDto);
   }
 }

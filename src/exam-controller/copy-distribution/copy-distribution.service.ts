@@ -11,6 +11,7 @@ import {
 } from './dto/progess-bundle.dto';
 import { Slot, SlotDocument } from '../../schemas/slot.schema';
 import { Room, RoomDocument } from '../../schemas/room.schema';
+import { EditBundleDto } from './dto/edit-bundle.dto';
 
 @Injectable()
 export class CopyDistributionService {
@@ -400,5 +401,31 @@ export class CopyDistributionService {
     return {
       message: 'Bundle deleted successfully',
     };
+  }
+
+  //#region Edit Bundle
+  async editBundle(editBundleDto: EditBundleDto) {
+    try {
+      const bundle = await this.copyBundleModel.findById(editBundleDto.id);
+
+      if (!bundle) {
+        throw new HttpException('Bundle not found', 400);
+      }
+
+      bundle.date_of_exam = editBundleDto.dateOfExamination;
+      bundle.subject_name = editBundleDto.subjectName;
+      bundle.room_no = +editBundleDto.roomNumber;
+
+      bundle.save();
+
+      return {
+        message: 'Bundle updated successfully',
+      };
+    } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
+      throw new HttpException(e.message, 400);
+    }
   }
 }
