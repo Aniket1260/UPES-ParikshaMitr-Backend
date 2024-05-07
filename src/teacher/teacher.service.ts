@@ -297,34 +297,74 @@ export class TeacherService {
   async getSlotDetails(id: string) {
     try {
       const slots = await this.slotModel.find().exec();
-      const flyingSquads = await this.flyingsquadModel
-        .find()
-        .populate('rooms_assigned.room_id')
-        .exec();
+      let invDutiesArray = [];
+      let flyingSquadArray = [];
+      for (const slot of slots) {
+        invDutiesArray = [...invDutiesArray, ...slot.inv_duties];
+        const flyingSquadIds = await Promise.all(
+          slot.flying_squad.map(async (flyingSquadId) => {
+            const flyingSquad = await this.flyingsquadModel.findById(
+              flyingSquadId,
+            );
+            return {
+              teacher_id_flying_squad: flyingSquad.teacher_id.toString(),
+              flying_squad_id: flyingSquadId.toString(),
+            };
+          }),
+        );
+        flyingSquadArray = [...flyingSquadArray, ...flyingSquadIds];
+      }
+      console.log(invDutiesArray);
       const result = {};
       for (const slot of slots) {
-        // Format the date as 'YYYY-MM-DD'
         const date = slot.date.toString().split('T')[0];
-
-        // Initialize the array for this date
         result[date] = [];
+        for (const invDuty of invDutiesArray) {
+          if (
+            slot.inv_duties.includes(invDuty.toString()) &&
+            invDuty.toString() === id
+          ) {
+            result[date].push({
+              time: slot.timeSlot,
+              type: 'Invigilation Duty',
+              room: 'Controller Room',
+              message:
+                'Go to the controller room, press start invigilation and scan the QR for further instructions',
+            });
+          }
+        }
+        for (const fs of flyingSquadArray) {
+          if (
+            slot.flying_squad.includes(fs.flying_squad_id) &&
+            fs.teacher_id_flying_squad === id
+          ) {
+            result[date].push({
+              time: slot.timeSlot,
+              type: 'Flying Squad',
+              room: 'Controller Room',
+              message:
+                'Go to the controller room, press start invigilation and scan the QR for further  instructions',
+            });
+          }
+        }
+      }
 
-        // Find the flying squads for this slot
-        const squads = flyingSquads.filter(
-          (squad) => squad.slot.toString() === slot._id.toString(),
-        );
-        for (const squad of squads) {
-          const task =
-            squad._id.toString() === id ? 'Flying Duty' : 'Invigilation Duty';
-          result[date].push({
-            timeSlot: slot.timeSlot,
-            task: task,
-            room: 'Controller Room',
-            message:
-              'Go to the controller room, press start invigilation and scan the QR for further instructions', // This is hardcoded, adjust as needed
+      for (const date in result) {
+        if (result[date].length === 0) {
+          delete result[date];
+        } else {
+          const uniqueTimes = new Set();
+          result[date] = result[date].filter((event) => {
+            if (uniqueTimes.has(event.time)) {
+              return false;
+            } else {
+              uniqueTimes.add(event.time);
+              return true;
+            }
           });
         }
       }
+
       return result;
     } catch (err) {
       throw new HttpException(
@@ -335,7 +375,6 @@ export class TeacherService {
       );
     }
   }
-
   async getNotifications() {
     try {
       const notifications = await this.notificationModel
