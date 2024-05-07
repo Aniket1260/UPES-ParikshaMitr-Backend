@@ -22,11 +22,18 @@ import {
   NotificationDocument,
 } from '../schemas/notification.schema';
 
+import { Slot } from '../schemas/slot.schema';
+// import
+// import { Slot } from '../schemas/slot.schema';
+import { FlyingSquad } from '../schemas/flying-squad.schema';
+
 @Injectable()
 export class TeacherService {
   constructor(
     @InjectModel(Teacher.name) private teacherModel: Model<Teacher>,
     @InjectModel(Schedule.name) private scheduleModel: Model<Schedule>,
+    @InjectModel(Slot.name) private slotModel: Model<Slot>,
+    @InjectModel(FlyingSquad.name) private flyingsquadModel: Model<FlyingSquad>,
     @InjectModel(Notification.name)
     private notificationModel: Model<Notification>,
     private jwtService: JwtService,
@@ -74,6 +81,7 @@ export class TeacherService {
       const teacherData = await this.teacherModel.findOne({
         sap_id: teacher.sap_id,
       });
+
       if (!teacherData) {
         throw new HttpException(
           {
@@ -286,6 +294,87 @@ export class TeacherService {
     }
   }
 
+  async getSlotDetails(id: string) {
+    try {
+      const slots = await this.slotModel.find().exec();
+      let invDutiesArray = [];
+      let flyingSquadArray = [];
+      for (const slot of slots) {
+        invDutiesArray = [...invDutiesArray, ...slot.inv_duties];
+        const flyingSquadIds = await Promise.all(
+          slot.flying_squad.map(async (flyingSquadId) => {
+            const flyingSquad = await this.flyingsquadModel.findById(
+              flyingSquadId,
+            );
+            return {
+              teacher_id_flying_squad: flyingSquad.teacher_id.toString(),
+              flying_squad_id: flyingSquadId.toString(),
+            };
+          }),
+        );
+        flyingSquadArray = [...flyingSquadArray, ...flyingSquadIds];
+      }
+      console.log(invDutiesArray);
+      const result = {};
+      for (const slot of slots) {
+        const date = slot.date.toString().split('T')[0];
+        result[date] = [];
+        for (const invDuty of invDutiesArray) {
+          if (
+            slot.inv_duties.includes(invDuty.toString()) &&
+            invDuty.toString() === id
+          ) {
+            result[date].push({
+              time: slot.timeSlot,
+              type: 'Invigilation Duty',
+              room: 'Controller Room',
+              message:
+                'Go to the controller room, press start invigilation and scan the QR for further instructions',
+            });
+          }
+        }
+        for (const fs of flyingSquadArray) {
+          if (
+            slot.flying_squad.includes(fs.flying_squad_id) &&
+            fs.teacher_id_flying_squad === id
+          ) {
+            result[date].push({
+              time: slot.timeSlot,
+              type: 'Flying Squad',
+              room: 'Controller Room',
+              message:
+                'Go to the controller room, press start invigilation and scan the QR for further  instructions',
+            });
+          }
+        }
+      }
+
+      for (const date in result) {
+        if (result[date].length === 0) {
+          delete result[date];
+        } else {
+          const uniqueTimes = new Set();
+          result[date] = result[date].filter((event) => {
+            if (uniqueTimes.has(event.time)) {
+              return false;
+            } else {
+              uniqueTimes.add(event.time);
+              return true;
+            }
+          });
+        }
+      }
+
+      return result;
+    } catch (err) {
+      throw new HttpException(
+        {
+          message: 'Internal Error',
+        },
+        404,
+      );
+    }
+  }
   async getNotifications() {
     try {
       const notifications = await this.notificationModel
