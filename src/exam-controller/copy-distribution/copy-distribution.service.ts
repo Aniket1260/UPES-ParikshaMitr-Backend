@@ -11,7 +11,7 @@ import {
 } from './dto/progess-bundle.dto';
 import { Slot, SlotDocument } from '../../schemas/slot.schema';
 import { Room, RoomDocument } from '../../schemas/room.schema';
-import { EditBundleDto } from './dto/edit-bundle.dto';
+import { EditBatchDto, EditBundleDto } from './dto/edit-bundle.dto';
 
 @Injectable()
 export class CopyDistributionService {
@@ -420,6 +420,40 @@ export class CopyDistributionService {
 
       return {
         message: 'Bundle updated successfully',
+      };
+    } catch (e) {
+      if (e instanceof HttpException) {
+        throw e;
+      }
+      throw new HttpException(e.message, 400);
+    }
+  }
+
+  //#region Edit Batch
+  async editBatch(editBatchDto: EditBatchDto) {
+    try {
+      const bundle = await this.copyBundleModel.findOne({
+        'copies._id': editBatchDto.id,
+      });
+
+      if (!bundle) {
+        throw new HttpException('Batch not found', 400);
+      }
+
+      const batchIndex = bundle.copies.findIndex(
+        (copy: any) => copy._id.toString() === editBatchDto.id,
+      );
+
+      if (batchIndex === -1) {
+        throw new HttpException('Batch not found', 400);
+      }
+
+      bundle.copies[batchIndex].no_of_students = editBatchDto.numStudents;
+
+      bundle.save();
+
+      return {
+        message: 'Batch updated successfully',
       };
     } catch (e) {
       if (e instanceof HttpException) {

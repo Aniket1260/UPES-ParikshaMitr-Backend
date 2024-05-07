@@ -14,3 +14,13 @@ export class EditBundleDto {
   @IsNotEmpty()
   id: string;
 }
+
+export class EditBatchDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  numStudents: number;
+}
